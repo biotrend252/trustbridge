@@ -1,0 +1,18 @@
+{
+  "name": "trustbridge",
+  "version": "1.0.0",
+  "description": "Privacy-preserving cross-border remittance with CRE",
+  "scripts": {
+    "postinstall": "bun x cre-setup",
+    "simulate": "cre workflow simulate",
+    "deploy": "cre workflow deploy",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

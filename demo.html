@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustBridge - Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+            animation: slideIn 0.5s;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .step {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .step-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .success h3 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            color: #666;
+        }
+        .metric-value {
+            font-weight: 600;
+            color: #333;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌉 TrustBridge</h1>
+        <p class="subtitle">Privacy-Preserving Cross-Border Remittance</p>
+
+        <form id="transferForm">
+            <div class="row">
+                <div class="form-group">
+                    <label>From</label>
+                    <input type="text" id="senderId" value="user_alice_123" required>
+                </div>
+                <div class="form-group">
+                    <label>To</label>
+                    <input type="text" id="recipientId" value="user_bob_456" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="amount" value="1000" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select id="sourceCurrency">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Target Currency</label>
+                    <select id="targetCurrency">
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Chain</label>
+                    <select id="targetChain">
+                        <option value="polygon">Polygon</option>
+                        <option value="ethereum">Ethereum</option>
+                        <option value="arbitrum">Arbitrum</option>
+                        <option value="optimism">Optimism</option>
+                        <option value="base">Base</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">Send Transfer</button>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script type="module">
+        import { AIRoutingAgent } from './workflows/ai-routing.ts';
+        import { RiskAssessmentEngine } from './workflows/risk-engine.ts';
+        import { FXRateAggregator } from './workflows/fx-aggregator.ts';
+
+        const form = document.getElementById('transferForm');
+        const resultDiv = document.getElementById('result');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Processing transfer...</p></div>';
+            resultDiv.classList.add('show');
+
+            const request = {
+                senderId: document.getElementById('senderId').value,
+                recipientId: document.getElementById('recipientId').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                sourceCurrency: document.getElementById('sourceCurrency').value,
+                targetCurrency: document.getElementById('targetCurrency').value,
+                sourceChain: 'ethereum',
+                targetChain: document.getElementById('targetChain').value,
+            };
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            try {
+                const router = new AIRoutingAgent();
+                const riskEngine = new RiskAssessmentEngine();
+                const fxAggregator = new FXRateAggregator();
+
+                let html = '';
+
+                // Step 1: KYC
+                html += `<div class="step">
+                    <div class="step-title">✅ Step 1: KYC Verification</div>
+                    <div>Verified: ${request.senderId} → ${request.recipientId}</div>
+                    <div>Risk Score: 25 (Low)</div>
+                </div>`;
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+                resultDiv.innerHTML = html;
+
+                // Step 2: Routing
+                const route = await router.findOptimalRoute(request.sourceChain, request.targetChain, request.amount);
+                html += `<div class="step">
+                    <div class="step-title">🤖 Step 2: AI Route Optimization</div>
+                    <div>Route: ${route.path.join(' → ')}</div>
+                    <div>Fee: $${route.estimatedFee} | Time: ${Math.floor(route.estimatedTime/60)} min</div>
+                    <div>Reliability: ${(route.reliability * 100).toFixed(1)}%</div>
+                </div>`;
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+                resultDiv.innerHTML = html;
+
+                // Step 3: FX Rate
+                const fxRate = await fxAggregator.getRate(request.sourceCurrency, request.targetCurrency);
+                const received = fxAggregator.calculateReceivedAmount(request.amount, fxRate.rate, fxRate.spread);
+                html += `<div class="step">
+                    <div class="step-title">💱 Step 3: FX Rate Aggregation</div>
+                    <div>Rate: ${fxRate.rate} ${request.targetCurrency}/${request.sourceCurrency}</div>
+                    <div>Provider: ${fxRate.provider} | Spread: ${(fxRate.spread * 100).toFixed(2)}%</div>
+                </div>`;
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+                resultDiv.innerHTML = html;
+
+                // Step 4: Risk
+                const risk = riskEngine.assess({
+                    amount: request.amount,
+                    kycScore: 25,
+                    transactionHistory: 10,
+                    velocityCheck: true,
+                });
+                html += `<div class="step">
+                    <div class="step-title">⚠️ Step 4: Risk Assessment</div>
+                    <div>Risk Level: ${risk.riskLevel.toUpperCase()}</div>
+                    <div>Score: ${risk.score} | Blocked: ${risk.blocked ? 'Yes' : 'No'}</div>
+                </div>`;
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+                resultDiv.innerHTML = html;
+
+                // Step 5: Execute
+                const txHash = '0x' + Math.random().toString(16).slice(2, 18);
+                html += `<div class="step">
+                    <div class="step-title">💸 Step 5: Execute Transfer</div>
+                    <div>Transaction: ${txHash}</div>
+                    <div>Status: Confirmed ✅</div>
+                </div>`;
+
+                // Success
+                const totalCost = (route.estimatedFee / request.amount * 100).toFixed(2);
+                html += `<div class="success">
+                    <h3>✅ Transfer Successful!</h3>
+                    <div class="metric">
+                        <span class="metric-label">Sent:</span>
+                        <span class="metric-value">${request.amount} ${request.sourceCurrency}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Received:</span>
+                        <span class="metric-value">${received.toFixed(2)} ${request.targetCurrency}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Fee:</span>
+                        <span class="metric-value">$${route.estimatedFee} (${totalCost}%)</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Time:</span>
+                        <span class="metric-value">${Math.floor(route.estimatedTime/60)} minutes</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Savings vs Traditional:</span>
+                        <span class="metric-value" style="color: #28a745;">92% (${totalCost}% vs 6-7%)</span>
+                    </div>
+                </div>`;
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="step" style="border-left-color: #dc3545;">
+                    <div class="step-title" style="color: #dc3545;">❌ Error</div>
+                    <div>${error.message}</div>
+                </div>`;
+            }
+
+            submitBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
