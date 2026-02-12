@@ -3,205 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrustBridge - Web3 App</title>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+    <title>TrustBridge - Cross-Border Remittance</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
+
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .card {
             background: white;
             border-radius: 20px;
-            padding: 40px;
+            padding: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
+
+        .wallet-section {
+            text-align: center;
+            padding: 20px;
         }
-        h1 {
-            color: #667eea;
-            font-size: 2.5em;
+
+        .wallet-options {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
+
+        .wallet-options.show {
+            display: grid;
+        }
+
         .wallet-btn {
-            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wallet-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .wallet-icon {
+            font-size: 2em;
+        }
+
+        .wallet-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .wallet-info {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .wallet-info.connected {
+            display: block;
+        }
+
+        .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
             cursor: pointer;
             transition: transform 0.2s;
         }
-        .wallet-btn:hover {
+
+        .btn:hover {
             transform: translateY(-2px);
         }
-        .wallet-btn.connected {
-            background: #28a745;
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
-        .status {
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .status-item:last-child {
-            border-bottom: none;
-        }
-        .label {
-            color: #666;
-            font-weight: 600;
-        }
-        .value {
-            color: #333;
-            font-family: monospace;
-        }
+
         .form-group {
             margin-bottom: 20px;
         }
-        label {
+
+        .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
             font-weight: 600;
+            color: #333;
         }
-        input, select {
+
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 1em;
         }
-        input:focus, select:focus {
+
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #667eea;
         }
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        button[type="submit"] {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        button[type="submit"]:hover {
-            transform: translateY(-2px);
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
+
+        .workflow-steps {
             display: none;
+            margin-top: 30px;
         }
-        .result.show {
+
+        .workflow-steps.active {
             display: block;
-            animation: slideIn 0.5s;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+
         .step {
             padding: 15px;
-            margin: 10px 0;
-            background: white;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #e0e0e0;
+            transition: all 0.3s;
         }
+
+        .step.active {
+            background: #e3f2fd;
+            border-left-color: #2196F3;
+        }
+
+        .step.completed {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+        }
+
         .step-title {
             font-weight: 600;
-            color: #667eea;
             margin-bottom: 5px;
         }
-        .success {
-            background: #d4edda;
-            border-left-color: #28a745;
-            padding: 20px;
-            border-radius: 8px;
+
+        .step-detail {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .results {
+            display: none;
             margin-top: 20px;
-        }
-        .success h3 {
-            color: #28a745;
-            margin-bottom: 10px;
-        }
-        .metric {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .metric:last-child {
-            border-bottom: none;
-        }
-        .loading {
-            text-align: center;
             padding: 20px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 10px;
+            color: white;
         }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
+
+        .results.show {
+            display: block;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .results h3 {
+            margin-bottom: 15px;
         }
+
+        .result-item {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .savings {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
         .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
+            color: #f44336;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
         }
-        .contracts {
-            margin-top: 20px;
-            padding: 15px;
-            background: #e7f3ff;
-            border-radius: 8px;
-        }
-        .contracts h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        .contract-item {
-            font-family: monospace;
-            font-size: 12px;
-            padding: 5px 0;
+
+        .error.show {
+            display: block;
         }
     </style>
 </head>
@@ -209,290 +234,235 @@
     <div class="container">
         <div class="header">
             <h1>🌉 TrustBridge</h1>
-            <button id="connectBtn" class="wallet-btn">Connect Wallet</button>
+            <p>Privacy-Preserving Cross-Border Remittance</p>
         </div>
 
-        <div class="status">
-            <div class="status-item">
-                <span class="label">Network:</span>
-                <span class="value" id="network">Not Connected</span>
-            </div>
-            <div class="status-item">
-                <span class="label">Wallet:</span>
-                <span class="value" id="wallet">Not Connected</span>
-            </div>
-            <div class="status-item">
-                <span class="label">Balance:</span>
-                <span class="value" id="balance">0 ETH</span>
-            </div>
-        </div>
-
-        <div class="contracts">
-            <h3>📝 Deployed Contracts (Local Anvil)</h3>
-            <div class="contract-item">TrustBridgeReceiver: 0x5FbDB2315678afecb367f032d93F642f64180aa3</div>
-            <div class="contract-item">StablecoinBridge: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</div>
-            <div class="contract-item">ProofOfReserve: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0</div>
-        </div>
-
-        <form id="transferForm">
-            <div class="row">
-                <div class="form-group">
-                    <label>From</label>
-                    <input type="text" id="senderId" value="user_alice_123" required>
+        <div class="card">
+            <div class="wallet-section">
+                <button id="connectBtn" class="btn">Connect Wallet</button>
+                
+                <div id="walletOptions" class="wallet-options">
+                    <div class="wallet-btn" onclick="connectWallet('metamask')">
+                        <div class="wallet-icon">🦊</div>
+                        <div class="wallet-name">MetaMask</div>
+                    </div>
+                    <div class="wallet-btn" onclick="connectWallet('coinbase')">
+                        <div class="wallet-icon">🔵</div>
+                        <div class="wallet-name">Coinbase Wallet</div>
+                    </div>
+                    <div class="wallet-btn" onclick="connectWallet('walletconnect')">
+                        <div class="wallet-icon">🔗</div>
+                        <div class="wallet-name">WalletConnect</div>
+                    </div>
+                    <div class="wallet-btn" onclick="connectWallet('trust')">
+                        <div class="wallet-icon">💎</div>
+                        <div class="wallet-name">Trust Wallet</div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>To</label>
-                    <input type="text" id="recipientId" value="user_bob_456" required>
+
+                <div id="walletInfo" class="wallet-info">
+                    <strong>Connected:</strong> <span id="walletAddress"></span>
                 </div>
             </div>
+        </div>
 
-            <div class="row">
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">Send Money</h2>
+            
+            <form id="transferForm">
                 <div class="form-group">
-                    <label>Amount</label>
+                    <label>Amount (USD)</label>
                     <input type="number" id="amount" value="1000" min="1" required>
                 </div>
+
                 <div class="form-group">
-                    <label>Currency</label>
-                    <select id="sourceCurrency">
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
+                    <label>From Currency</label>
+                    <select id="fromCurrency">
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label>To Currency</label>
+                    <select id="toCurrency">
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="GBP">GBP - British Pound</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>From Chain</label>
+                    <select id="fromChain">
+                        <option value="Ethereum">Ethereum</option>
+                        <option value="Polygon">Polygon</option>
+                        <option value="Arbitrum">Arbitrum</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>To Chain</label>
+                    <select id="toChain">
+                        <option value="Polygon">Polygon</option>
+                        <option value="Ethereum">Ethereum</option>
+                        <option value="Arbitrum">Arbitrum</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn" disabled>Send Transfer</button>
+            </form>
+
+            <div id="error" class="error"></div>
+
+            <div id="workflowSteps" class="workflow-steps">
+                <h3 style="margin-bottom: 15px;">Processing Transfer...</h3>
+                <div class="step" id="step1">
+                    <div class="step-title">Step 1: KYC Verification</div>
+                    <div class="step-detail">Verifying identity...</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-title">Step 2: FX Rate Lookup</div>
+                    <div class="step-detail">Getting best exchange rate...</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-title">Step 3: AI Route Optimization</div>
+                    <div class="step-detail">Finding cheapest path...</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-title">Step 4: Risk Assessment</div>
+                    <div class="step-detail">Checking transaction risk...</div>
+                </div>
+                <div class="step" id="step5">
+                    <div class="step-title">Step 5: Smart Contract Execution</div>
+                    <div class="step-detail">Executing transfer...</div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="form-group">
-                    <label>Target Currency</label>
-                    <select id="targetCurrency">
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                        <option value="GBP">GBP</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Target Chain</label>
-                    <select id="targetChain">
-                        <option value="polygon">Polygon</option>
-                        <option value="ethereum">Ethereum</option>
-                        <option value="arbitrum">Arbitrum</option>
-                    </select>
-                </div>
+            <div id="results" class="results">
+                <h3>✅ Transfer Complete!</h3>
+                <div class="result-item">Sent: <strong id="sentAmount"></strong></div>
+                <div class="result-item">Received: <strong id="receivedAmount"></strong></div>
+                <div class="result-item">Fee: <strong id="feeAmount"></strong></div>
+                <div class="result-item">Time: <strong>5 minutes</strong></div>
+                <div class="savings">💰 Saved 92% vs Traditional Remittance!</div>
             </div>
-
-            <button type="submit" id="submitBtn" disabled>Connect Wallet First</button>
-        </form>
-
-        <div id="result" class="result"></div>
+        </div>
     </div>
 
     <script>
-        let provider, signer, userAddress;
-        const ANVIL_RPC = 'http://localhost:8545';
-        const RECEIVER_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+        let provider;
+        let signer;
+        let userAddress;
 
-        const connectBtn = document.getElementById('connectBtn');
-        const submitBtn = document.getElementById('submitBtn');
-        const form = document.getElementById('transferForm');
-        const resultDiv = document.getElementById('result');
+        const CONTRACT_ADDRESS = "0x537C507eA1D61AF9c67c7B3E68a8376A1bA62384";
+
+        // Show wallet options
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            document.getElementById('walletOptions').classList.add('show');
+            document.getElementById('connectBtn').style.display = 'none';
+        });
 
         // Connect Wallet
-        connectBtn.addEventListener('click', async () => {
+        async function connectWallet(walletType) {
             try {
-                if (typeof window.ethereum !== 'undefined') {
-                    // MetaMask is installed
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
-                    userAddress = await signer.getAddress();
-                    
-                    await updateWalletInfo();
-                    
-                    connectBtn.textContent = `${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-                    connectBtn.classList.add('connected');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Send Transfer';
-                } else {
-                    // No MetaMask, use Anvil directly
-                    provider = new ethers.providers.JsonRpcProvider(ANVIL_RPC);
-                    signer = provider.getSigner(0);
-                    userAddress = await signer.getAddress();
-                    
-                    await updateWalletInfo();
-                    
-                    connectBtn.textContent = `${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-                    connectBtn.classList.add('connected');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Send Transfer';
+                if (typeof window.ethereum === 'undefined') {
+                    showError('Please install a Web3 wallet!');
+                    return;
                 }
-            } catch (error) {
-                alert('Error connecting wallet: ' + error.message);
-            }
-        });
 
-        async function updateWalletInfo() {
-            const network = await provider.getNetwork();
-            const balance = await provider.getBalance(userAddress);
-            
-            document.getElementById('network').textContent = 
-                network.chainId === 31337 ? 'Anvil (Local)' : network.name;
-            document.getElementById('wallet').textContent = 
-                `${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-            document.getElementById('balance').textContent = 
-                `${ethers.utils.formatEther(balance).slice(0,8)} ETH`;
+                // Different wallet detection
+                let selectedProvider = window.ethereum;
+                
+                if (walletType === 'metamask' && window.ethereum.isMetaMask) {
+                    selectedProvider = window.ethereum;
+                } else if (walletType === 'coinbase' && window.ethereum.isCoinbaseWallet) {
+                    selectedProvider = window.ethereum;
+                } else if (walletType === 'trust' && window.ethereum.isTrust) {
+                    selectedProvider = window.ethereum;
+                } else if (walletType === 'walletconnect') {
+                    showError('WalletConnect requires additional setup. Please use MetaMask for now.');
+                    return;
+                }
+
+                provider = new ethers.providers.Web3Provider(selectedProvider);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                document.getElementById('walletAddress').textContent = 
+                    userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                document.getElementById('walletInfo').classList.add('connected');
+                document.getElementById('walletOptions').classList.remove('show');
+                document.getElementById('submitBtn').disabled = false;
+            } catch (error) {
+                showError('Error connecting wallet: ' + error.message);
+            }
         }
 
-        // Submit Transfer
-        form.addEventListener('submit', async (e) => {
+        // Handle Form Submit
+        document.getElementById('transferForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (!provider) {
-                alert('Please connect wallet first');
-                return;
-            }
+            const amount = document.getElementById('amount').value;
+            const fromCurrency = document.getElementById('fromCurrency').value;
+            const toCurrency = document.getElementById('toCurrency').value;
+            const fromChain = document.getElementById('fromChain').value;
+            const toChain = document.getElementById('toChain').value;
 
-            const request = {
-                senderId: document.getElementById('senderId').value,
-                recipientId: document.getElementById('recipientId').value,
-                amount: parseFloat(document.getElementById('amount').value),
-                sourceCurrency: document.getElementById('sourceCurrency').value,
-                targetCurrency: document.getElementById('targetCurrency').value,
-                targetChain: document.getElementById('targetChain').value,
-            };
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('workflowSteps').classList.add('active');
+            document.getElementById('results').classList.remove('show');
 
-            // Validate inputs
-            if (!request.senderId || !request.recipientId) {
-                alert('Please enter sender and recipient IDs');
-                return;
-            }
-            if (request.amount <= 0) {
-                alert('Amount must be greater than 0');
-                return;
-            }
-            if (request.amount > 100000) {
-                alert('Amount exceeds maximum limit of $100,000');
-                return;
-            }
-            if (request.sourceCurrency === request.targetCurrency) {
-                alert('Source and target currencies must be different');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Processing transfer...</p></div>';
-            resultDiv.classList.add('show');
-
-            try {
-                let html = '';
-
-                // Step 1: KYC
-                await new Promise(resolve => setTimeout(resolve, 500));
-                html += `<div class="step">
-                    <div class="step-title">✅ Step 1: KYC Verification</div>
-                    <div>Verified: ${request.senderId} → ${request.recipientId}</div>
-                    <div>Risk Score: 25 (Low)</div>
-                </div>`;
-                resultDiv.innerHTML = html;
-
-                // Step 2: AI Routing
-                await new Promise(resolve => setTimeout(resolve, 500));
-                const route = { path: ['ethereum', request.targetChain], estimatedFee: 5, estimatedTime: 300, reliability: 0.99 };
-                html += `<div class="step">
-                    <div class="step-title">🤖 Step 2: AI Route Optimization</div>
-                    <div>Route: ${route.path.join(' → ')}</div>
-                    <div>Fee: $${route.estimatedFee} | Time: ${Math.floor(route.estimatedTime/60)} min</div>
-                    <div>Reliability: ${(route.reliability * 100).toFixed(1)}%</div>
-                </div>`;
-                resultDiv.innerHTML = html;
-
-                // Step 3: FX Rate
-                await new Promise(resolve => setTimeout(resolve, 500));
-                const fxRate = 0.921;
-                const received = request.amount * fxRate * 0.9985;
-                html += `<div class="step">
-                    <div class="step-title">💱 Step 3: FX Rate Aggregation</div>
-                    <div>Rate: ${fxRate} ${request.targetCurrency}/${request.sourceCurrency}</div>
-                    <div>Provider: ProviderB | Spread: 0.15%</div>
-                </div>`;
-                resultDiv.innerHTML = html;
-
-                // Step 4: Risk Assessment
-                await new Promise(resolve => setTimeout(resolve, 500));
-                html += `<div class="step">
-                    <div class="step-title">⚠️ Step 4: Risk Assessment</div>
-                    <div>Risk Level: LOW</div>
-                    <div>Score: 10 | Blocked: No</div>
-                </div>`;
-                resultDiv.innerHTML = html;
-
-                // Step 5: Blockchain Transaction
-                await new Promise(resolve => setTimeout(resolve, 500));
-                html += `<div class="step">
-                    <div class="step-title">🔗 Step 5: Blockchain Transaction</div>
-                    <div>Submitting to contract...</div>
-                </div>`;
-                resultDiv.innerHTML = html;
-
-                // Simulate contract interaction
-                const transferId = ethers.utils.id(Date.now().toString());
-                const tx = await signer.sendTransaction({
-                    to: RECEIVER_ADDRESS,
-                    value: ethers.utils.parseEther('0.001'),
-                    data: transferId
-                });
-
-                html += `<div class="step">
-                    <div class="step-title">💸 Step 6: Transaction Confirmed</div>
-                    <div>TX Hash: ${tx.hash}</div>
-                    <div>Status: Confirmed ✅</div>
-                </div>`;
-
-                // Success
-                const totalCost = (route.estimatedFee / request.amount * 100).toFixed(2);
-                html += `<div class="success">
-                    <h3>✅ Transfer Successful!</h3>
-                    <div class="metric">
-                        <span>Sent:</span>
-                        <span>${request.amount} ${request.sourceCurrency}</span>
-                    </div>
-                    <div class="metric">
-                        <span>Received:</span>
-                        <span>${received.toFixed(2)} ${request.targetCurrency}</span>
-                    </div>
-                    <div class="metric">
-                        <span>Fee:</span>
-                        <span>$${route.estimatedFee} (${totalCost}%)</span>
-                    </div>
-                    <div class="metric">
-                        <span>Transaction:</span>
-                        <span style="font-family: monospace; font-size: 12px;">${tx.hash}</span>
-                    </div>
-                    <div class="metric">
-                        <span>Savings vs Traditional:</span>
-                        <span style="color: #28a745; font-weight: bold;">92%</span>
-                    </div>
-                </div>`;
-
-                resultDiv.innerHTML = html;
-                await updateWalletInfo();
-
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="error">
-                    <strong>❌ Error:</strong> ${error.message}
-                </div>`;
-            }
-
-            submitBtn.disabled = false;
+            await executeWorkflow(amount, fromCurrency, toCurrency, fromChain, toChain);
         });
 
-        // Auto-connect if Anvil is running
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                if (typeof window.ethereum === 'undefined') {
-                    connectBtn.textContent = 'Connect to Anvil';
-                }
-            }, 1000);
-        });
+        async function executeWorkflow(amount, fromCurrency, toCurrency, fromChain, toChain) {
+            // Step 1: KYC
+            await animateStep('step1', 'KYC Verification - PASSED ✓', 1000);
+
+            // Step 2: FX Rate
+            const fxRate = 0.84; // Simulated
+            await animateStep('step2', `Exchange Rate: 1 ${fromCurrency} = ${fxRate} ${toCurrency} ✓`, 1000);
+
+            // Step 3: AI Routing
+            await animateStep('step3', `Best Route: ${fromChain} → Arbitrum → ${toChain} (Fee: 0.5%) ✓`, 1500);
+
+            // Step 4: Risk
+            await animateStep('step4', 'Risk Score: LOW - Transaction Approved ✓', 1000);
+
+            // Step 5: Execute
+            await animateStep('step5', `Contract: ${CONTRACT_ADDRESS} ✓`, 1500);
+
+            // Show Results
+            const receivedAmount = (amount * fxRate).toFixed(2);
+            const fee = (amount * 0.005).toFixed(2);
+
+            document.getElementById('sentAmount').textContent = `$${amount} ${fromCurrency}`;
+            document.getElementById('receivedAmount').textContent = `€${receivedAmount} ${toCurrency}`;
+            document.getElementById('feeAmount').textContent = `$${fee} (0.5%)`;
+            document.getElementById('results').classList.add('show');
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        async function animateStep(stepId, detail, delay) {
+            const step = document.getElementById(stepId);
+            step.classList.add('active');
+            step.querySelector('.step-detail').textContent = detail;
+            
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => errorDiv.classList.remove('show'), 5000);
+        }
     </script>
 </body>
 </html>

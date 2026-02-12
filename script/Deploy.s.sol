@@ -8,7 +8,8 @@ import "../src/ProofOfReserve.sol";
 
 contract DeployScript is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        string memory privateKeyStr = vm.envString("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.parseUint(privateKeyStr);
         address stablecoin = vm.envAddress("STABLECOIN_ADDRESS");
         
         vm.startBroadcast(deployerPrivateKey);
