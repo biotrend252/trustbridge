@@ -241,7 +241,36 @@
             <div class="wallet-section">
                 <button id="connectBtn" class="btn">Connect Wallet</button>
                 
+                <div id="networkSelector" class="wallet-options" style="display: none;">
+                    <h3 style="margin-bottom: 15px; text-align: center;">Select Network</h3>
+                    <div class="wallet-btn" onclick="selectNetwork('ethereum')">
+                        <div class="wallet-icon">⟠</div>
+                        <div class="wallet-name">Ethereum</div>
+                    </div>
+                    <div class="wallet-btn" onclick="selectNetwork('sepolia')">
+                        <div class="wallet-icon">🧪</div>
+                        <div class="wallet-name">Sepolia Testnet</div>
+                    </div>
+                    <div class="wallet-btn" onclick="selectNetwork('polygon')">
+                        <div class="wallet-icon">🟣</div>
+                        <div class="wallet-name">Polygon</div>
+                    </div>
+                    <div class="wallet-btn" onclick="selectNetwork('arbitrum')">
+                        <div class="wallet-icon">🔵</div>
+                        <div class="wallet-name">Arbitrum</div>
+                    </div>
+                    <div class="wallet-btn" onclick="selectNetwork('base')">
+                        <div class="wallet-icon">🔷</div>
+                        <div class="wallet-name">Base</div>
+                    </div>
+                    <div class="wallet-btn" onclick="selectNetwork('optimism')">
+                        <div class="wallet-icon">🔴</div>
+                        <div class="wallet-name">Optimism</div>
+                    </div>
+                </div>
+                
                 <div id="walletOptions" class="wallet-options">
+                    <h3 style="margin-bottom: 15px; text-align: center;">Select Wallet</h3>
                     <div class="wallet-btn" onclick="connectWallet('metamask')">
                         <div class="wallet-icon">🦊</div>
                         <div class="wallet-name">MetaMask</div>
@@ -261,7 +290,8 @@
                 </div>
 
                 <div id="walletInfo" class="wallet-info">
-                    <strong>Connected:</strong> <span id="walletAddress"></span>
+                    <strong>Connected:</strong> <span id="walletAddress"></span><br>
+                    <strong>Network:</strong> <span id="networkName"></span>
                 </div>
             </div>
         </div>
@@ -346,7 +376,9 @@
                 <div class="result-item">Received: <strong id="receivedAmount"></strong></div>
                 <div class="result-item">Fee: <strong id="feeAmount"></strong></div>
                 <div class="result-item">Time: <strong>5 minutes</strong></div>
+                <div class="result-item">Transaction ID: <strong id="txId"></strong></div>
                 <div class="savings">💰 Saved 92% vs Traditional Remittance!</div>
+                <button class="btn" onclick="downloadReceipt()" style="margin-top: 15px;">📄 Download Receipt</button>
             </div>
         </div>
     </div>
@@ -358,43 +390,95 @@
 
         const CONTRACT_ADDRESS = "0x537C507eA1D61AF9c67c7B3E68a8376A1bA62384";
 
-        // Show wallet options
+        // Show wallet options first
         document.getElementById('connectBtn').addEventListener('click', () => {
             document.getElementById('walletOptions').classList.add('show');
             document.getElementById('connectBtn').style.display = 'none';
         });
 
-        // Connect Wallet
+        let selectedWallet = null;
+
+        // Connect Wallet - then show networks
         async function connectWallet(walletType) {
+            if (typeof window.ethereum === 'undefined') {
+                showError('Please install MetaMask or another Web3 wallet!');
+                return;
+            }
+
+            selectedWallet = walletType;
+            
+            // Hide wallet options, show network selector
+            document.getElementById('walletOptions').classList.remove('show');
+            document.getElementById('networkSelector').style.display = 'grid';
+        }
+
+        // Select network and connect
+        async function selectNetwork(network) {
             try {
                 if (typeof window.ethereum === 'undefined') {
                     showError('Please install a Web3 wallet!');
                     return;
                 }
 
-                // Different wallet detection
-                let selectedProvider = window.ethereum;
+                // Network chain IDs
+                const networks = {
+                    'ethereum': { chainId: '0x1', name: 'Ethereum Mainnet' },
+                    'sepolia': { chainId: '0xaa36a7', name: 'Sepolia Testnet' },
+                    'polygon': { chainId: '0x89', name: 'Polygon' },
+                    'arbitrum': { chainId: '0xa4b1', name: 'Arbitrum' },
+                    'optimism': { chainId: '0xa', name: 'Optimism' },
+                    'base': { chainId: '0x2105', name: 'Base' }
+                };
+
+                const targetNetwork = networks[network];
+
+                // FIRST: Request account connection - this opens MetaMask popup
+                provider = new ethers.providers.Web3Provider(window.ethereum);
                 
-                if (walletType === 'metamask' && window.ethereum.isMetaMask) {
-                    selectedProvider = window.ethereum;
-                } else if (walletType === 'coinbase' && window.ethereum.isCoinbaseWallet) {
-                    selectedProvider = window.ethereum;
-                } else if (walletType === 'trust' && window.ethereum.isTrust) {
-                    selectedProvider = window.ethereum;
-                } else if (walletType === 'walletconnect') {
-                    showError('WalletConnect requires additional setup. Please use MetaMask for now.');
-                    return;
+                try {
+                    await provider.send("eth_requestAccounts", []);
+                } catch (error) {
+                    if (error.code === 4001) {
+                        showError('Connection rejected. Please approve in your wallet.');
+                        document.getElementById('networkSelector').style.display = 'none';
+                        document.getElementById('connectBtn').style.display = 'block';
+                        return;
+                    }
+                    throw error;
                 }
 
-                provider = new ethers.providers.Web3Provider(selectedProvider);
-                await provider.send("eth_requestAccounts", []);
+                // SECOND: Request network switch - opens MetaMask again
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: targetNetwork.chainId }],
+                    });
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        showError(`Please add ${targetNetwork.name} to your wallet first`);
+                        document.getElementById('networkSelector').style.display = 'none';
+                        document.getElementById('connectBtn').style.display = 'block';
+                        return;
+                    }
+                    if (switchError.code === 4001) {
+                        showError('Network switch rejected. Please try again.');
+                        document.getElementById('networkSelector').style.display = 'none';
+                        document.getElementById('connectBtn').style.display = 'block';
+                        return;
+                    }
+                    throw switchError;
+                }
                 signer = provider.getSigner();
                 userAddress = await signer.getAddress();
 
+                // Get network
+                const currentNetwork = await provider.getNetwork();
+
                 document.getElementById('walletAddress').textContent = 
                     userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                document.getElementById('networkName').textContent = targetNetwork.name;
                 document.getElementById('walletInfo').classList.add('connected');
-                document.getElementById('walletOptions').classList.remove('show');
+                document.getElementById('networkSelector').style.display = 'none';
                 document.getElementById('submitBtn').disabled = false;
             } catch (error) {
                 showError('Error connecting wallet: ' + error.message);
@@ -438,10 +522,12 @@
             // Show Results
             const receivedAmount = (amount * fxRate).toFixed(2);
             const fee = (amount * 0.005).toFixed(2);
+            const txId = 'TB-' + Date.now().toString(36).toUpperCase();
 
             document.getElementById('sentAmount').textContent = `$${amount} ${fromCurrency}`;
             document.getElementById('receivedAmount').textContent = `€${receivedAmount} ${toCurrency}`;
             document.getElementById('feeAmount').textContent = `$${fee} (0.5%)`;
+            document.getElementById('txId').textContent = txId;
             document.getElementById('results').classList.add('show');
             document.getElementById('submitBtn').disabled = false;
         }
@@ -466,3 +552,40 @@
     </script>
 </body>
 </html>
+
+<script>
+let lastTransaction = null;
+
+function downloadReceipt() {
+    // Get the last transaction from history
+    const history = JSON.parse(localStorage.getItem('trustbridge_history') || '[]');
+    if (history.length === 0) {
+        alert('No transaction to download');
+        return;
+    }
+    
+    const tx = history[history.length - 1];
+    const txId = document.getElementById('txId').textContent;
+
+    const receipt = `TRUSTBRIDGE RECEIPT
+Transaction ID: ${txId}
+Date: ${tx.timestamp}
+
+Amount Sent: ${tx.sentAmount}
+Amount Received: ${tx.receivedAmount}
+Fee: ${tx.fee}
+Route: ${tx.fromChain} → ${tx.toChain}
+
+Contract: 0x537C507eA1D61AF9c67c7B3E68a8376A1bA62384
+Status: COMPLETED
+`;
+
+    const blob = new Blob([receipt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TrustBridge-Receipt-${txId}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>

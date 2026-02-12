@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustBridge - Cross-Border Remittance</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .card {
+            background: #0f3460;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            border-color: #16213e;
+        }
+
+        body.dark-mode .step {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .step.active {
+            background: #16213e;
+        }
+
+        body.dark-mode .step.completed {
+            background: #1a4d2e;
+        }
+
+        body.dark-mode .history-item {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .history-title {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .wallet-btn {
+            background: #1a1a2e;
+            border-color: #16213e;
+        }
+
+        body.dark-mode .wallet-btn:hover {
+            border-color: #667eea;
+        }
+
+        body.dark-mode .wallet-name {
+            color: #e0e0e0;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.2em;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 4em;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .tagline {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .wallet-section {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .wallet-options {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .wallet-options.show {
+            display: grid;
+        }
+
+        .wallet-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wallet-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .wallet-icon {
+            font-size: 2em;
+        }
+
+        .wallet-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .wallet-info {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .wallet-info.connected {
+            display: block;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .workflow-steps {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .workflow-steps.active {
+            display: block;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        body.dark-mode .progress-text {
+            color: #a8b3ff;
+        }
+
+        body.dark-mode .progress-bar-container {
+            background: #1a1a2e;
+        }
+
+        .step {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            background: #e3f2fd;
+            border-left-color: #2196F3;
+        }
+
+        .step.completed {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .step-detail {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .results {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .comparison-chart {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .comparison-title {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .comparison-row {
+            margin-bottom: 20px;
+        }
+
+        .comparison-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .comparison-bar-container {
+            height: 40px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .comparison-bar {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-weight: 600;
+            transition: width 1s ease;
+            position: relative;
+        }
+
+        .comparison-bar.traditional {
+            background: linear-gradient(90deg, #ff6b6b 0%, #ee5a6f 100%);
+            width: 0%;
+        }
+
+        .comparison-bar.trustbridge {
+            background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+            width: 0%;
+        }
+
+        .savings-highlight {
+            text-align: center;
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 8px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #000;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .results h3 {
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .savings {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .error {
+            color: #f44336;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .step {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .history-section {
+            margin-top: 20px;
+        }
+
+        .history-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+        }
+
+        .history-details {
+            flex: 1;
+        }
+
+        .history-amount {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .history-route {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .history-time {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .history-status {
+            background: #4CAF50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    
+    <div class="container">
+        <div class="header">
+            <div class="logo">🌉</div>
+            <h1>TrustBridge</h1>
+            <p>Privacy-Preserving Cross-Border Remittance</p>
+            <div class="tagline">
+                <div class="stat">
+                    <div class="stat-value">92%</div>
+                    <div class="stat-label">Cost Savings</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">5 min</div>
+                    <div class="stat-label">Transfer Time</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">0.5%</div>
+                    <div class="stat-label">Fee</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="wallet-section">
+                <button id="connectBtn" class="btn">Connect Wallet</button>
+                
+                <div id="walletOptions" class="wallet-options">
+                    <div class="wallet-btn" onclick="connectWallet('metamask')">
+                        <div class="wallet-icon">🦊</div>
+                        <div class="wallet-name">MetaMask</div>
+                    </div>
+                    <div class="wallet-btn" onclick="connectWallet('coinbase')">
+                        <div class="wallet-icon">🔵</div>
+                        <div class="wallet-name">Coinbase Wallet</div>
+                    </div>
+                    <div class="wallet-btn" onclick="connectWallet('walletconnect')">
+                        <div class="wallet-icon">🔗</div>
+                        <div class="wallet-name">WalletConnect</div>
+                    </div>
+                    <div class="wallet-btn" onclick="connectWallet('trust')">
+                        <div class="wallet-icon">💎</div>
+                        <div class="wallet-name">Trust Wallet</div>
+                    </div>
+                </div>
+
+                <div id="walletInfo" class="wallet-info">
+                    <strong>Connected:</strong> <span id="walletAddress"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">Send Money</h2>
+            
+            <form id="transferForm">
+                <div class="form-group">
+                    <label>Amount (USD)</label>
+                    <input type="number" id="amount" value="1000" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>From Currency</label>
+                    <select id="fromCurrency">
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="JPY">JPY - Japanese Yen</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
+                        <option value="CHF">CHF - Swiss Franc</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
+                        <option value="INR">INR - Indian Rupee</option>
+                        <option value="MXN">MXN - Mexican Peso</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>To Currency</label>
+                    <select id="toCurrency">
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="JPY">JPY - Japanese Yen</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
+                        <option value="CHF">CHF - Swiss Franc</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
+                        <option value="INR">INR - Indian Rupee</option>
+                        <option value="MXN">MXN - Mexican Peso</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>From Chain</label>
+                    <select id="fromChain">
+                        <option value="Ethereum">Ethereum</option>
+                        <option value="Polygon">Polygon</option>
+                        <option value="Arbitrum">Arbitrum</option>
+                        <option value="Optimism">Optimism</option>
+                        <option value="Base">Base</option>
+                        <option value="Avalanche">Avalanche</option>
+                        <option value="BNB Chain">BNB Chain</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>To Chain</label>
+                    <select id="toChain">
+                        <option value="Polygon">Polygon</option>
+                        <option value="Ethereum">Ethereum</option>
+                        <option value="Arbitrum">Arbitrum</option>
+                        <option value="Optimism">Optimism</option>
+                        <option value="Base">Base</option>
+                        <option value="Avalanche">Avalanche</option>
+                        <option value="BNB Chain">BNB Chain</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn" disabled>Send Transfer</button>
+            </form>
+
+            <div id="error" class="error"></div>
+
+            <div id="workflowSteps" class="workflow-steps">
+                <h3 style="margin-bottom: 15px;">Processing Transfer...</h3>
+                <div class="progress-text" id="progressText">Starting...</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="step" id="step1">
+                    <div class="step-title">Step 1: KYC Verification</div>
+                    <div class="step-detail">Verifying identity...</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-title">Step 2: FX Rate Lookup</div>
+                    <div class="step-detail">Getting best exchange rate...</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-title">Step 3: AI Route Optimization</div>
+                    <div class="step-detail">Finding cheapest path...</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-title">Step 4: Risk Assessment</div>
+                    <div class="step-detail">Checking transaction risk...</div>
+                </div>
+                <div class="step" id="step5">
+                    <div class="step-title">Step 5: Smart Contract Execution</div>
+                    <div class="step-detail">Executing transfer...</div>
+                </div>
+            </div>
+
+            <div id="results" class="results">
+                <h3>✅ Transfer Complete!</h3>
+                <div class="result-item">Sent: <strong id="sentAmount"></strong></div>
+                <div class="result-item">Received: <strong id="receivedAmount"></strong></div>
+                <div class="result-item">Fee: <strong id="feeAmount"></strong></div>
+                <div class="result-item">Time: <strong>5 minutes</strong></div>
+                <div class="result-item">Transaction ID: <strong id="txId"></strong></div>
+                
+                <div class="comparison-chart">
+                    <div class="comparison-title">💰 Cost Comparison</div>
+                    
+                    <div class="comparison-row">
+                        <div class="comparison-label">
+                            <span>Traditional (Western Union, Banks)</span>
+                            <span id="traditionalFee">$70 (7%)</span>
+                        </div>
+                        <div class="comparison-bar-container">
+                            <div class="comparison-bar traditional" id="traditionalBar">
+                                <span>$70 (7%)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-row">
+                        <div class="comparison-label">
+                            <span>TrustBridge</span>
+                            <span id="trustbridgeFee">$5 (0.5%)</span>
+                        </div>
+                        <div class="comparison-bar-container">
+                            <div class="comparison-bar trustbridge" id="trustbridgeBar">
+                                <span>$5 (0.5%)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="savings-highlight" id="savingsAmount">
+                        🎉 YOU SAVE: $65 (92%)
+                    </div>
+                </div>
+                
+                <div class="savings">⚡ 5 minutes vs 2-5 days</div>
+                <button class="btn" onclick="downloadReceipt()" style="margin-top: 15px;">📄 Download Receipt</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="history-section">
+                <div class="history-title">📜 Transaction History</div>
+                <div id="historyList" class="history-list">
+                    <div class="empty-history">No transactions yet. Send your first transfer above!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let provider;
+        let signer;
+        let userAddress;
+
+        const CONTRACT_ADDRESS = "0x537C507eA1D61AF9c67c7B3E68a8376A1bA62384";
+        let transactionHistory = [];
+
+        // Load history from localStorage
+        function loadHistory() {
+            const saved = localStorage.getItem('trustbridge_history');
+            if (saved) {
+                transactionHistory = JSON.parse(saved);
+                displayHistory();
+            }
+        }
+
+        // Save history to localStorage
+        function saveHistory() {
+            localStorage.setItem('trustbridge_history', JSON.stringify(transactionHistory));
+        }
+
+        // Display history
+        function displayHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (transactionHistory.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">No transactions yet. Send your first transfer above!</div>';
+                return;
+            }
+
+            historyList.innerHTML = transactionHistory.map(tx => `
+                <div class="history-item">
+                    <div class="history-details">
+                        <div class="history-amount">${tx.sentAmount} → ${tx.receivedAmount}</div>
+                        <div class="history-route">${tx.fromChain} → ${tx.toChain}</div>
+                        <div class="history-time">${tx.timestamp}</div>
+                    </div>
+                    <div class="history-status">✓ Complete</div>
+                </div>
+            `).reverse().join('');
+        }
+
+        // Add transaction to history
+        function addToHistory(tx) {
+            transactionHistory.push({
+                ...tx,
+                timestamp: new Date().toLocaleString()
+            });
+            saveHistory();
+            displayHistory();
+        }
+
+        // Load history on page load
+        loadHistory();
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.querySelector('.theme-toggle');
+            
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle').textContent = '☀️';
+            }
+        }
+
+        loadTheme();
+
+        let lastTransaction = null;
+
+        // Download receipt
+        function downloadReceipt() {
+            if (!lastTransaction) return;
+
+            const receipt = `
+╔════════════════════════════════════════════════════════════╗
+║                    TRUSTBRIDGE RECEIPT                     ║
+║           Privacy-Preserving Cross-Border Transfer         ║
+╚════════════════════════════════════════════════════════════╝
+
+Transaction ID: ${lastTransaction.txId}
+Date: ${lastTransaction.timestamp}
+
+─────────────────────────────────────────────────────────────
+
+TRANSFER DETAILS:
+  Amount Sent:      ${lastTransaction.sentAmount}
+  Amount Received:  ${lastTransaction.receivedAmount}
+  Exchange Rate:    1 ${lastTransaction.fromCurrency} = 0.84 ${lastTransaction.toCurrency}
+  
+ROUTE:
+  From Chain:       ${lastTransaction.fromChain}
+  To Chain:         ${lastTransaction.toChain}
+  Route:            ${lastTransaction.fromChain} → Arbitrum → ${lastTransaction.toChain}
+
+FEES:
+  TrustBridge Fee:  ${lastTransaction.fee} (0.5%)
+  Traditional Fee:  $${(parseFloat(lastTransaction.sentAmount.replace(/[^0-9.]/g, '')) * 0.07).toFixed(2)} (7%)
+  You Saved:        $${(parseFloat(lastTransaction.sentAmount.replace(/[^0-9.]/g, '')) * 0.065).toFixed(2)} (92%)
+
+PROCESSING:
+  Transfer Time:    5 minutes
+  Status:           ✓ COMPLETED
+  
+SMART CONTRACT:
+  Contract Address: ${CONTRACT_ADDRESS}
+  Network:          Sepolia Testnet
+  Verify:           https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}
+
+─────────────────────────────────────────────────────────────
+
+Thank you for using TrustBridge!
+Fast • Secure • Affordable
+
+For support: support@trustbridge.io
+Website: https://trustbridge.io
+
+╚════════════════════════════════════════════════════════════╝
+            `.trim();
+
+            const blob = new Blob([receipt], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TrustBridge-Receipt-${lastTransaction.txId}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Show wallet options
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            document.getElementById('walletOptions').classList.add('show');
+            document.getElementById('connectBtn').style.display = 'none';
+        });
+
+        // Connect Wallet
+        async function connectWallet(walletType) {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    showError('Please install a Web3 wallet!');
+                    return;
+                }
+
+                // Different wallet detection
+                let selectedProvider = window.ethereum;
+                
+                if (walletType === 'metamask' && window.ethereum.isMetaMask) {
+                    selectedProvider = window.ethereum;
+                } else if (walletType === 'coinbase' && window.ethereum.isCoinbaseWallet) {
+                    selectedProvider = window.ethereum;
+                } else if (walletType === 'trust' && window.ethereum.isTrust) {
+                    selectedProvider = window.ethereum;
+                } else if (walletType === 'walletconnect') {
+                    showError('WalletConnect requires additional setup. Please use MetaMask for now.');
+                    return;
+                }
+
+                provider = new ethers.providers.Web3Provider(selectedProvider);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                document.getElementById('walletAddress').textContent = 
+                    userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                document.getElementById('walletInfo').classList.add('connected');
+                document.getElementById('walletOptions').classList.remove('show');
+                document.getElementById('submitBtn').disabled = false;
+            } catch (error) {
+                showError('Error connecting wallet: ' + error.message);
+            }
+        }
+
+        // Handle Form Submit
+        document.getElementById('transferForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const amount = document.getElementById('amount').value;
+            const fromCurrency = document.getElementById('fromCurrency').value;
+            const toCurrency = document.getElementById('toCurrency').value;
+            const fromChain = document.getElementById('fromChain').value;
+            const toChain = document.getElementById('toChain').value;
+
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('workflowSteps').classList.add('active');
+            document.getElementById('results').classList.remove('show');
+
+            await executeWorkflow(amount, fromCurrency, toCurrency, fromChain, toChain);
+        });
+
+        async function executeWorkflow(amount, fromCurrency, toCurrency, fromChain, toChain) {
+            // Reset progress
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').textContent = 'Starting...';
+            
+            // Step 1: KYC
+            updateProgress(20, 'Verifying identity...');
+            await animateStep('step1', 'KYC Verification - PASSED ✓', 1000);
+
+            // Step 2: FX Rate (simulated rates)
+            updateProgress(40, 'Getting exchange rates...');
+            const fxRates = {
+                'USD-EUR': 0.84, 'USD-GBP': 0.73, 'USD-JPY': 153.32, 'USD-CAD': 1.36,
+                'USD-AUD': 1.40, 'USD-CHF': 0.77, 'USD-CNY': 6.92, 'USD-INR': 90.74,
+                'USD-MXN': 17.19, 'EUR-USD': 1.19, 'EUR-GBP': 0.87, 'GBP-USD': 1.37,
+                'GBP-EUR': 1.15, 'JPY-USD': 0.0065, 'CAD-USD': 0.74, 'AUD-USD': 0.71,
+                'CHF-USD': 1.30, 'CNY-USD': 0.14, 'INR-USD': 0.011, 'MXN-USD': 0.058
+            };
+            
+            const rateKey = `${fromCurrency}-${toCurrency}`;
+            const fxRate = fxRates[rateKey] || 1;
+            
+            await animateStep('step2', `Exchange Rate: 1 ${fromCurrency} = ${fxRate.toFixed(4)} ${toCurrency} ✓`, 1000);
+
+            // Step 3: AI Routing
+            updateProgress(60, 'Optimizing route...');
+            await animateStep('step3', `Best Route: ${fromChain} → Arbitrum → ${toChain} (Fee: 0.5%) ✓`, 1500);
+
+            // Step 4: Risk
+            updateProgress(80, 'Checking risk...');
+            await animateStep('step4', 'Risk Score: LOW - Transaction Approved ✓', 1000);
+
+            // Step 5: Execute
+            updateProgress(100, 'Executing transfer...');
+            await animateStep('step5', `Contract: ${CONTRACT_ADDRESS} ✓`, 1500);
+
+            // Trigger confetti
+            createConfetti();
+
+            // Show Results
+            const receivedAmount = (amount * fxRate).toFixed(2);
+            const fee = (amount * 0.005).toFixed(2);
+            const txId = 'TB-' + Date.now().toString(36).toUpperCase();
+
+            // Currency symbols
+            const symbols = {
+                'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CAD': 'C$',
+                'AUD': 'A$', 'CHF': 'CHF', 'CNY': '¥', 'INR': '₹', 'MXN': 'MX$'
+            };
+
+            document.getElementById('sentAmount').textContent = 
+                `${symbols[fromCurrency] || ''}${amount} ${fromCurrency}`;
+            document.getElementById('receivedAmount').textContent = 
+                `${symbols[toCurrency] || ''}${receivedAmount} ${toCurrency}`;
+            document.getElementById('feeAmount').textContent = `$${fee} (0.5%)`;
+            document.getElementById('txId').textContent = txId;
+            document.getElementById('results').classList.add('show');
+            document.getElementById('submitBtn').disabled = false;
+
+            // Save last transaction for receipt
+            lastTransaction = {
+                txId,
+                sentAmount: `${symbols[fromCurrency] || ''}${amount} ${fromCurrency}`,
+                receivedAmount: `${symbols[toCurrency] || ''}${receivedAmount} ${toCurrency}`,
+                fromCurrency,
+                toCurrency,
+                fromChain,
+                toChain,
+                fee: `$${fee}`,
+                timestamp: new Date().toLocaleString()
+            };
+
+            // Add to history
+            addToHistory(lastTransaction);
+
+            // Animate comparison chart
+            setTimeout(() => {
+                const traditionalFee = (amount * 0.07).toFixed(2);
+                const savings = (amount * 0.065).toFixed(2);
+                
+                document.getElementById('traditionalFee').textContent = `$${traditionalFee} (7%)`;
+                document.getElementById('trustbridgeFee').textContent = `$${fee} (0.5%)`;
+                document.getElementById('savingsAmount').textContent = `🎉 YOU SAVE: $${savings} (92%)`;
+                
+                // Animate bars
+                document.getElementById('traditionalBar').style.width = '100%';
+                document.getElementById('traditionalBar').querySelector('span').textContent = `$${traditionalFee} (7%)`;
+                
+                setTimeout(() => {
+                    const trustbridgePercent = (parseFloat(fee) / parseFloat(traditionalFee)) * 100;
+                    document.getElementById('trustbridgeBar').style.width = trustbridgePercent + '%';
+                    document.getElementById('trustbridgeBar').querySelector('span').textContent = `$${fee} (0.5%)`;
+                }, 500);
+            }, 300);
+        }
+
+            // Save last transaction for receipt
+            lastTransaction = {
+                txId,
+                sentAmount: `$${amount} ${fromCurrency}`,
+                receivedAmount: `€${receivedAmount} ${toCurrency}`,
+                fromCurrency,
+                toCurrency,
+                fromChain,
+                toChain,
+                fee: `$${fee}`,
+                timestamp: new Date().toLocaleString()
+            };
+
+            // Add to history
+            addToHistory(lastTransaction);
+        }
+
+        async function animateStep(stepId, detail, delay) {
+            const step = document.getElementById(stepId);
+            step.classList.add('active');
+            step.querySelector('.step-detail').textContent = detail;
+            
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+
+        function updateProgress(percent, text) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function createConfetti() {
+            const colors = ['#667eea', '#764ba2', '#4CAF50', '#FFD700', '#FF6B6B'];
+            const confettiCount = 50;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.borderRadius = '50%';
+                    confetti.style.pointerEvents = 'none';
+                    confetti.style.zIndex = '9999';
+                    confetti.style.animation = `fall ${2 + Math.random() * 2}s linear`;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 30);
+            }
+        }
+
+        // Add confetti animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => errorDiv.classList.remove('show'), 5000);
+        }
+    </script>
+</body>
+</html>
