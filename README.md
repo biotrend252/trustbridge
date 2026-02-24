@@ -1,5 +1,8 @@
 # 🌉 TrustBridge
 
+## 🎥 Demo Video
+Watch the demo: [https://youtu.be/vSeUUpgZyJU]
+
 **Privacy-Preserving Cross-Border Remittance Platform**
 
 [![Chainlink Hackathon](https://img.shields.io/badge/Chainlink-Hackathon%202026-blue)](https://chain.link/hackathon)
